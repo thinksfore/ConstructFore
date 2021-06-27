@@ -1,0 +1,191 @@
+<%@ Master Language="C#" AutoEventWireup="true" CodeBehind="admin.master.cs" Inherits="ConstructFore.admin.admin" %>
+
+<!DOCTYPE html>
+
+<html>
+<head runat="server">
+    <meta charset="UTF-8">
+    <title>rehoboth admin</title>
+    <link href="http://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700,800|Shadows+Into+Light" rel="stylesheet" type="text/css">
+    <link rel="stylesheet" href="assets/vendor/bootstrap/css/bootstrap.css" />
+    <link rel="stylesheet" href="assets/vendor/font-awesome/css/font-awesome.css" />
+    <link rel="stylesheet" href="assets/stylesheets/theme.css" />
+    <link rel="stylesheet" href="assets/stylesheets/skins/default.css" />
+    <link rel="stylesheet" href="assets/stylesheets/theme-custom.css">
+    <script src="assets/vendor/modernizr/modernizr.js"></script>
+    <asp:ContentPlaceHolder ID="head" runat="server">
+    </asp:ContentPlaceHolder>
+</head>
+<body>
+    <section class="body">
+        <header class="header">
+            <div class="logo-container">
+                <a href="../" class="logo">
+                    <h4 class="text-white" style="font-size: 22px; color: #ffffff;">Rehoboth <span style="color: orange;">Designers</span></h4>
+                </a>
+                <div class="visible-xs toggle-sidebar-left" data-toggle-class="sidebar-left-opened" data-target="html" data-fire-event="sidebar-left-opened">
+                    <i class="fa fa-bars" aria-label="Toggle sidebar"></i>
+                </div>
+            </div>
+            <div class="header-right">
+                <ul class="notifications">
+
+                    <li>
+                        <a href="#" class="dropdown-toggle notification-icon" data-toggle="dropdown">
+                            <i class="fa fa-envelope"></i>
+                            <span class="badge">3</span>
+                        </a>
+
+                        <div class="dropdown-menu notification-menu">
+                            <div class="notification-title">
+                                <span class="pull-right label label-default">3</span>
+                                Enquiries
+                            </div>
+
+                            <div class="content">
+                                <ul>
+                                    <li>
+                                        <a href="#" class="clearfix">
+                                            <div class="image">
+                                                <i class="fa fa-thumbs-down bg-danger"></i>
+                                            </div>
+                                            <span class="title">Server is Down!</span>
+                                            <span class="message">Just now</span>
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a href="#" class="clearfix">
+                                            <div class="image">
+                                                <i class="fa fa-lock bg-warning"></i>
+                                            </div>
+                                            <span class="title">User Locked</span>
+                                            <span class="message">15 minutes ago</span>
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a href="#" class="clearfix">
+                                            <div class="image">
+                                                <i class="fa fa-signal bg-success"></i>
+                                            </div>
+                                            <span class="title">Connection Restaured</span>
+                                            <span class="message">10/10/2014</span>
+                                        </a>
+                                    </li>
+                                </ul>
+
+                                <hr />
+
+                                <div class="text-right">
+                                    <a href="#" class="view-more">View All</a>
+                                </div>
+                            </div>
+                        </div>
+                    </li>
+                </ul>
+
+                <span class="separator"></span>
+
+                <div id="userbox" class="userbox">
+                    <a href="#" data-toggle="dropdown">
+                        <figure class="profile-picture">
+                            <img src="assets/images/!logged-user.jpg" alt="Joseph Doe" class="img-circle" data-lock-picture="assets/images/!logged-user.jpg" />
+                        </figure>
+                        <div class="profile-info" data-lock-name="John Doe" data-lock-email="johndoe@JSOFT.com">
+                            <span class="name">John Doe Junior</span>
+                            <span class="role">administrator</span>
+                        </div>
+
+                        <i class="fa custom-caret"></i>
+                    </a>
+
+                    <div class="dropdown-menu">
+                        <ul class="list-unstyled">
+                            <li class="divider"></li>
+                            <li>
+                                <a role="menuitem" tabindex="-1" href="pages-user-profile.html"><i class="fa fa-user"></i>My Profile</a>
+                            </li>
+                            <li>
+                                <a role="menuitem" tabindex="-1" href="#" data-lock-screen="true"><i class="fa fa-lock"></i>Lock Screen</a>
+                            </li>
+                            <li>
+                                <a role="menuitem" tabindex="-1" href="login.aspx"><i class="fa fa-power-off"></i>Logout</a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </header>
+        <div class="inner-wrapper">
+            <aside id="sidebar-left" class="sidebar-left">
+                <div class="sidebar-header">
+                    <div class="sidebar-title" style="color: #fff;">
+                        ConstructFore
+                    </div>
+                    <div class="sidebar-toggle hidden-xs" data-toggle-class="sidebar-left-collapsed" data-target="html" data-fire-event="sidebar-left-toggle">
+                        <i class="fa fa-bars" aria-label="Toggle sidebar"></i>
+                    </div>
+                </div>
+                <div class="nano">
+                    <div class="nano-content">
+                        <nav id="menu" class="nav-main" role="navigation">
+                            <ul class="nav nav-main">
+                                <li>
+                                    <a href="mailbox-folder.html">
+                                        <i class="fa fa-envelope" aria-hidden="true"></i>
+                                        <span>Enquiry Master</span>
+                                    </a>
+                                </li>
+                                <li class="nav-active">
+                                    <a href="index.html">
+                                        <i class="fa fa-image" aria-hidden="true"></i>
+                                        <span>Image Master</span>
+                                    </a>
+                                </li>
+                                <li>
+                                    <a href="mailbox-folder.html">
+                                        <i class="fa fa-video-camera" aria-hidden="true"></i>
+                                        <span>Video Master</span>
+                                    </a>
+                                </li>
+                                <li>
+                                    <a href="mailbox-folder.html">
+                                        <i class="fa fa-user" aria-hidden="true"></i>
+                                        <span>User Master</span>
+                                    </a>
+                                </li>
+                            </ul>
+                        </nav>
+
+                    </div>
+
+                </div>
+
+            </aside>
+            <section role="main" class="content-body">
+                <header class="page-header">
+                    <h2>Dashboard</h2>
+
+                    <div class="right-wrapper pull-right">
+                        <ol class="breadcrumbs">
+                            <li>
+                                <a href="Dashboard.aspx">
+                                    <i class="fa fa-home"></i>
+                                </a>
+                            </li>
+                            <li><span>Dashboard</span></li>
+                        </ol>
+                    </div>
+                </header>
+                <asp:ContentPlaceHolder ID="ContentPlaceHolder1" runat="server">
+                </asp:ContentPlaceHolder>
+            </section>
+
+        </div>
+    </section>
+    <script src="assets/vendor/jquery/jquery.js"></script>
+    <script src="assets/vendor/jquery-browser-mobile/jquery.browser.mobile.js"></script>
+    <script src="assets/vendor/bootstrap/js/bootstrap.js"></script>
+    <script src="assets/vendor/nanoscroller/nanoscroller.js"></script>
+    <script src="assets/javascripts/theme.js"></script>
+</body>
+</html>
