@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Web;
 
 namespace ConstructFore
@@ -44,6 +45,7 @@ namespace ConstructFore
                 parameters.Add("Action", Action.read.ToString());
                 parameters.Add("ImageId", ImageId);
                 DataSet ds = GetDataSet("USP_ImageOperations", true, parameters);
+                StringBuilder sb = new StringBuilder();
                 if (ds != null)
                 {
                     if (ds.Tables.Count > 0)
@@ -52,21 +54,27 @@ namespace ConstructFore
                         {
                             foreach (DataRow dr in ds.Tables[0].Rows)
                             {
-                                ImageInfo iobj = new ImageInfo();
-                                //iobj.BannerImageStatus = Convert.ToInt32(dr["IsBanner"]);
-                                iobj.HomeImageStatus = Convert.ToInt32(dr["IsHome"]);
-                                iobj.ImageDiscription = Convert.ToString(dr["ImageName"]);
-                                iobj.ImageId = Convert.ToInt32(dr["Id"]);
-                                iobj.ImageName = Convert.ToString(dr["ImageName"]);
-                                iobj.ImageOrder = Convert.ToInt32(dr["ImageOrder"]);
-                                iobj.ImagePath = Convert.ToString(dr["ImagePath"]);
-                                iobj.ImageStatus = Convert.ToInt32(dr["IsActive"]);
-                                iobj.ThumbnailImagePath = Convert.ToString(dr["ThumbnailImagePath"]);
-                                iobj.CreatedDate = Convert.ToString(dr["CreatedDate"]);
-                                iobj.CreatedBy = Convert.ToString(dr["CreatedBy"]);
-                                listImageInfo.Add(iobj);
+                                sb.Append("<tr class='gradeA' data-ImageId=" + Convert.ToInt32(dr["Id"]) + ">");
+                                sb.Append("<td>" + Convert.ToString(dr["ImageName"]) + "</td>");
+                                sb.Append("<td>" + Convert.ToString(dr["ImageDescription"]) + "</td>");
+                                sb.Append("<td>" + Convert.ToInt32(dr["ImageOrder"]) + "</td>");
+                                if (Convert.ToInt32(dr["IsHome"]) == 1)
+                                    sb.Append("<td>Yes</td>");
+                                else
+                                    sb.Append("<td>No</td>");
+                                if (Convert.ToInt32(dr["IsActive"]) == 1)
+                                    sb.Append("<td>Yes</td>");
+                                else
+                                    sb.Append("<td>No</td>");
+
+                                sb.Append("<td>" + Convert.ToString(dr["CreatedDate"]) + "</td>");
+                                sb.Append("<td><a style='padding: 5px;' class='mb-xs mt-xs mr-xs modal-with-move-anim btn btn-default' href='javascript:void(0);' onclick='ViewImage(" + Convert.ToInt32(dr["Id"]) + ")'><i class='fa fa-image'></i></a>");
+                                sb.Append("<a style='padding: 5px;' class='mb-xs mt-xs mr-xs modal-with-move-anim btn btn-default' href='javascript:void(0)' onclick='EditImageInfo(" + Convert.ToInt32(dr["Id"]) + ")'><i class='fa fa-pencil'></i></a>");
+                                sb.Append("<a style='padding: 5px;' class='mb-xs mt-xs mr-xs modal-with-move-anim btn btn-default' href='javascript:void(0)' onclick='DeleteImageInfo(" + Convert.ToInt32(dr["Id"]) + ")'><i class='fa fa-trash-o'></i></a></td>");
+                                sb.Append("</tr>");
+
                             }
-                            objIM.listImageInfo = listImageInfo;
+                            objIM.ImageDetailsList = sb.ToString();
 
                         }
                         if (ds.Tables[1].Rows.Count > 0)
@@ -205,6 +213,7 @@ namespace ConstructFore
     public class ImageMasterInfo
     {
         public List<ImageInfo> listImageInfo { get; set; }
+        public string ImageDetailsList { get; set; }
         public int ActiveBannerImgCount { get; set; }
         public int ActiveHomeImgCount { get; set; }
     }
