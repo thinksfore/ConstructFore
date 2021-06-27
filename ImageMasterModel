@@ -1,0 +1,211 @@
+using System;
+using System.Collections.Generic;
+using System.Data;
+using System.IO;
+using System.Linq;
+using System.Web;
+
+namespace ConstructFore
+{
+    public class ImageMasterModel : DBOperations
+    {
+        public int InsertImageInfo(ImageInfo img)
+        {
+            int result = 0;
+            try
+            {
+                var parameters = new Dictionary<string, object>();
+                parameters.Add("Action", Action.insert.ToString());
+                parameters.Add("ImageName", img.ImageName);
+                parameters.Add("ImageDiscription", img.ImageDiscription);
+                parameters.Add("ImageOrder",Convert.ToInt32(img.ImageOrder));
+                parameters.Add("ImageStatus", Convert.ToInt32(img.ImageStatus));
+                parameters.Add("HomeImageStatus", Convert.ToInt32(img.HomeImageStatus));
+                //parameters.Add("BannerImageStatus", Convert.ToInt32(img.BannerImageStatus));
+                parameters.Add("UserId", 1);
+                DataTable dt = GetDataSet("USP_ImageOperations", true, parameters).Tables[0];
+                if (dt != null && dt.Rows.Count > 0)
+                    result = Convert.ToInt32(dt.Rows[0]["ImageId"]);
+                return result;
+            }
+            catch (Exception ex)
+            {
+                return result;
+            }
+        }
+
+        public ImageMasterInfo GetImageInfo(int ImageId)
+        {
+            ImageMasterInfo objIM = new ImageMasterInfo();
+            try
+            {
+                List<ImageInfo> listImageInfo = new List<ImageInfo>();
+                var parameters = new Dictionary<string, object>();
+                parameters.Add("Action", Action.read.ToString());
+                parameters.Add("ImageId", ImageId);
+                DataSet ds = GetDataSet("USP_ImageOperations", true, parameters);
+                if (ds != null)
+                {
+                    if (ds.Tables.Count > 0)
+                    {
+                        if (ds.Tables[0].Rows.Count > 0)
+                        {
+                            foreach (DataRow dr in ds.Tables[0].Rows)
+                            {
+                                ImageInfo iobj = new ImageInfo();
+                                //iobj.BannerImageStatus = Convert.ToInt32(dr["IsBanner"]);
+                                iobj.HomeImageStatus = Convert.ToInt32(dr["IsHome"]);
+                                iobj.ImageDiscription = Convert.ToString(dr["ImageName"]);
+                                iobj.ImageId = Convert.ToInt32(dr["Id"]);
+                                iobj.ImageName = Convert.ToString(dr["ImageName"]);
+                                iobj.ImageOrder = Convert.ToInt32(dr["ImageOrder"]);
+                                iobj.ImagePath = Convert.ToString(dr["ImagePath"]);
+                                iobj.ImageStatus = Convert.ToInt32(dr["IsActive"]);
+                                iobj.ThumbnailImagePath = Convert.ToString(dr["ThumbnailImagePath"]);
+                                iobj.CreatedDate = Convert.ToString(dr["CreatedDate"]);
+                                iobj.CreatedBy = Convert.ToString(dr["CreatedBy"]);
+                                listImageInfo.Add(iobj);
+                            }
+                            objIM.listImageInfo = listImageInfo;
+
+                        }
+                        if (ds.Tables[1].Rows.Count > 0)
+                        {
+                            objIM.ActiveBannerImgCount = Convert.ToInt32(ds.Tables[1].Rows[0]["ActiveBannerImgCount"]);
+                            objIM.ActiveHomeImgCount = Convert.ToInt32(ds.Tables[1].Rows[0]["ActiveHomeImgCount"]);
+                        }
+                    }
+                }
+                return objIM;
+            }
+            catch (Exception ex)
+            {
+                return objIM;
+            }
+        }
+
+        public int UpdateImageInfo(ImageInfo img)
+        {
+            int result = 0;
+            try
+            {
+                var parameters = new Dictionary<string, object>();
+                parameters.Add("Action", Action.update.ToString());
+                parameters.Add("ImageId", img.ImageId);
+                parameters.Add("ImagePath", img.ImagePath);
+                parameters.Add("ThumbnailImagePath", img.ThumbnailImagePath);
+                parameters.Add("ImageName", img.ImageName);
+                parameters.Add("ImageDiscription", img.ImageDiscription);
+                parameters.Add("ImageOrder", Convert.ToInt32(img.ImageOrder));
+                parameters.Add("ImageStatus", Convert.ToInt32(img.ImageStatus));
+                parameters.Add("HomeImageStatus", Convert.ToInt32(img.HomeImageStatus));
+                parameters.Add("BannerImageStatus", Convert.ToInt32(img.BannerImageStatus));
+                parameters.Add("UploadType", Convert.ToInt32(img.UploadType));
+                parameters.Add("UserId", 1);
+                DataTable dt = GetDataSet("USP_ImageOperations", true, parameters).Tables[0];
+                if (dt != null && dt.Rows.Count > 0)
+                    result = Convert.ToInt32(dt.Rows[0]["ImageId"]);
+                return result;
+            }
+            catch (Exception ex)
+            {
+                return result;
+            }
+        }
+        public int DeletImageInfo(int ImageId)
+        {
+            int result = 0;
+            try
+            {
+                var parameters = new Dictionary<string, object>();
+                parameters.Add("Action", Action.delete.ToString());
+                parameters.Add("ImageId",ImageId);
+                DataTable dt = GetDataSet("USP_ImageOperations", true, parameters).Tables[0];
+                if (dt != null && dt.Rows.Count > 0)
+                result=RemoveImage(Convert.ToString(dt.Rows[0]["ImageId"]));
+                return result;
+            }
+            catch (Exception ex)
+            {
+                return result;
+            }
+        }
+
+        public string SearchImageInfo(int ImageOrder,int ImageIdOrImageType)
+        {
+            string result = "";
+            List<ImageInfo> listImageInfo = new List<ImageInfo>();
+            var parameters = new Dictionary<string, object>();
+            parameters.Add("Action", Action.search.ToString());
+            parameters.Add("ImageOrder", ImageOrder);
+            parameters.Add("ImageId", ImageIdOrImageType);
+            DataSet ds = GetDataSet("USP_ImageOperations", true, parameters);
+            if (ds != null)
+                if (ds.Tables.Count > 0)
+                    result = Convert.ToString(ds.Tables[0].Rows[0]["result"]);
+            if(ImageIdOrImageType != 0 && ImageOrder==0)
+            {
+                //strdocPath = (Server.MapPath("~\\Uploads\\" + DocumentName));
+
+                //FileStream objfilestream = new FileStream(result, FileMode.Open, FileAccess.Read);
+                //int len = (int)objfilestream.Length;
+                //Byte[] documentcontents = new Byte[len];
+                //objfilestream.Read(documentcontents, 0, len);
+                //objfilestream.Close();
+                //result = Convert.ToBase64String(documentcontents);
+            }
+            return result;
+        }
+
+        public int RemoveImage(string ImageId)
+        {
+            int result = 0;
+            try
+            {
+                string partialName = ImageId+"_";
+                string serverPath = System.Web.Hosting.HostingEnvironment.MapPath("~/MasterImages");
+                if (Directory.Exists(@serverPath))
+                {
+                    DirectoryInfo hdDirectoryInWhichToSearch = new DirectoryInfo(@serverPath);
+                    //FileInfo[] filesInDir = hdDirectoryInWhichToSearch.GetFiles("*" + partialName + "*.*");
+                    FileInfo[] filesInDir = hdDirectoryInWhichToSearch.GetFiles("*" + partialName + "*");
+                    foreach (FileInfo foundFile in filesInDir)
+                    {
+                        if (File.Exists(foundFile.FullName))
+                        {
+                            File.Delete(foundFile.FullName);
+                        }
+                    }
+                    result = 1;
+                }
+                return result;
+            }
+            catch (Exception ex)
+            {
+                return -1;
+            }
+
+        }
+    }
+    public class ImageInfo
+    {
+        public string ImageName { get; set; }
+        public string ImageDiscription { get; set; }
+        public string ImagePath { get; set; }
+        public string ThumbnailImagePath { get; set; }
+        public int ImageOrder { get; set; }
+        public int BannerImageStatus { get; set; }
+        public int HomeImageStatus { get; set; }
+        public int ImageStatus { get; set; }
+        public int ImageId { get; set; }
+        public int UploadType { get; set; }
+        public string CreatedBy { get; set; }
+        public string CreatedDate { get; set; }
+    }
+    public class ImageMasterInfo
+    {
+        public List<ImageInfo> listImageInfo { get; set; }
+        public int ActiveBannerImgCount { get; set; }
+        public int ActiveHomeImgCount { get; set; }
+    }
+}
