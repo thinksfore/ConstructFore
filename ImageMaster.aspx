@@ -38,7 +38,6 @@
                         <th>Name</th>
                         <th>Description</th>
                         <th>Image Order</th>
-                        <%--<th>Is Banner</th>--%>
                         <th>Is Home</th>
                         <th>Is Active</th>
                         <th>Created Date</th>
@@ -360,35 +359,8 @@
                       success: function (data) {
                           //localStorage.setItem("ActiveBannerImgCount", data.d.ActiveBannerImgCount);
                           localStorage.setItem("ActiveHomeImgCount", data.d.ActiveHomeImgCount);
-                          var ImgList = data.d.listImageInfo;
-                          if (ImgList.length > 0) {
-                              var str = '';
-                              for (var i = 0; i <= ImgList.length-1; i++) {
-                                  str += '<tr class="gradeA" data-ImageId=' + ImgList[i].ImageId+'>';
-                                  str += '<td>'+ImgList[i].ImageName+'</td>';
-                                  str += '<td>' + ImgList[i].ImageDiscription+'</td>';
-                                  str += '<td>' + ImgList[i].ImageOrder + '</td>';
-
-                                  //if (ImgList[i].BannerImageStatus == 1)
-                                  //    str += '<td><input type="checkbox" checked="checked"></td>';
-                                  //else 
-                                  //    str += '<td><input type="checkbox"></td>';
-                                  if (ImgList[i].HomeImageStatus == 1)
-                                      str += '<td>Yes</td>';
-                                  else
-                                      str += '<td>No</td>';
-                                  if (ImgList[i].ImageStatus == 1)
-                                      str += '<td>Yes</td>';
-                                  else
-                                      str += '<td>No</td>';
-
-                                  str += '<td>' + ImgList[i].CreatedDate + '</td>';
-                                  str += '<td><a style="padding: 5px;" class="mb-xs mt-xs mr-xs modal-with-move-anim btn btn-default" href="javascript:void(0);" onclick="ViewImage(' + ImgList[i].ImageId + ')"><i class="fa fa-image"></i></a>';
-                                  str += '<a style="padding: 5px;" class="mb-xs mt-xs mr-xs modal-with-move-anim btn btn-default" href="javascript:void(0)" onclick="EditImageInfo(' + ImgList[i].ImageId + ')"><i class="fa fa-pencil"></i></a>';
-                                  str += '<a style="padding: 5px;" class="mb-xs mt-xs mr-xs modal-with-move-anim btn btn-default" href="javascript:void(0)" onclick="DeleteImageInfo(' + ImgList[i].ImageId + ')"><i class="fa fa-trash-o"></i></a></td>';
-                                  str += '</tr>';
-                              }
-                              $("#tbyImageInfo").empty().append(str);
+                          if (data.d.ImageDetailsList!="") {
+                              $("#tbyImageInfo").empty().append(data.d.ImageDetailsList);
                           }
                           else {
                               //not data
