@@ -1,4 +1,4 @@
-CREATE OR ALTER    PROCEDURE [dbo].[USP_ImageOperations] 
+CREATE OR ALTER PROCEDURE [dbo].[USP_ImageOperations] 
 @Action varchar(50) ,@ImageId int=0,
 @ImageName varchar(150)='',@ImageDiscription varchar(2000)='',@ImageOrder int=0,@ImageStatus int=0,@HomeImageStatus int=0
 ,@BannerImageStatus int=0,@ImagePath varchar(500)='',@ThumbnailImagePath varchar(500)='',@UploadType int=0,@UserId int=0
@@ -76,4 +76,76 @@ BEGIN
 		SELECT  @ImageId as ImageId; 
 	END
 END
+
 GO
+CREATE OR ALTER PROCEDURE [dbo].[usp_GetUserProfileDetails] 
+	@Action		VARCHAR(15),
+	@Name		VARCHAR(150)='',
+	@Password	VARCHAR(150)='',	
+	@UserId		INT=0,
+	@EmailId	VARCHAR(150)=''
+AS
+BEGIN
+	IF @Action='readProfile'
+		BEGIN
+			SELECT Name,UserName,EmailId FROM mstrUser WHERE Id=@UserId AND IsActive=1;
+		END
+	ELSE IF @Action='oldpwdcheck'
+		SELECT COUNT(Id) AS Result FROM mstrUser WHERE Password=@Password;
+	ELSE IF @Action='updateProfile'
+		BEGIN
+			IF @Name!= ''
+				UPDATE mstrUser SET Name= @Name WHERE Id=@UserId AND IsActive=1;
+			IF @Password!= ''
+				UPDATE mstrUser SET Password= @Password WHERE Id=@UserId AND IsActive=1;
+			SELECT 1 AS Result;
+		END
+	ELSE IF @Action='updateresetpwd'
+		BEGIN
+			UPDATE mstrUser SET [Password] = @Password WHERE EmailId=@EmailId AND IsActive=1;
+			SELECT 1 AS Result;
+		END
+END
+
+GO
+CREATE OR ALTER PROCEDURE [dbo].[usp_GetUserDetails] 
+	@Action		VARCHAR(15),
+	@UserName	VARCHAR(150)='',
+	@Password	VARCHAR(150)='',
+	@EmailId	VARCHAR(150)='',
+	@Name		VARCHAR(150)='',
+	@UserId		INT=0
+AS
+BEGIN
+	IF @Action='checkauth'
+		BEGIN
+			SELECT Id,Name FROM mstrUser WHERE UserName=@UserName AND [Password]=@Password AND IsActive=1;
+		END
+	ELSE IF @Action='insert'
+		IF NOT EXISTS(SELECT EmailId FROM mstrUser WHERE EmailId=@UserName)
+			IF NOT EXISTS(SELECT EmailId FROM mstrUser WHERE EmailId=@EmailId)
+				BEGIN
+					INSERT INTO mstrUser(Name,UserName,[Password],EmailId,IsActive,CreatedDate)
+					VALUES(@Name,@UserName,@Password,@EmailId,1,GETDATE());
+					IF @@ROWCOUNT>0
+						SELECT 1 AS Result;
+					ELSE
+						SELECT 0 AS Result;
+				END
+			ELSE
+				SELECT 2 AS Result;
+		ELSE
+			SELECT 3 AS Result;
+	ELSE IF @Action='readProfile'
+		BEGIN
+			SELECT Name,UserName,EmailId FROM mstrUser WHERE Id=@UserId AND IsActive=1;
+		END
+	ELSE IF @Action='updateProfile'
+		BEGIN
+			IF @Name!= ''
+				UPDATE mstrUser SET Name= @Name WHERE Id=@UserId AND IsActive=1;
+			IF @Password!= ''
+				UPDATE mstrUser SET Password= @Password WHERE Id=@UserId AND IsActive=1;
+			SELECT 1 AS Result;
+		END
+END
