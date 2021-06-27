@@ -1,0 +1,621 @@
+using System;
+using System.Collections.Generic;
+using System.Configuration;
+using System.Data;
+using System.Data.SqlClient;
+
+namespace ConstructFore
+{
+    public abstract class DBOperations
+    {
+
+        #region Private Variables
+        private string message;
+        private SqlConnection sqlConnection;
+        private SqlCommand sqlCommand;
+        private SqlDataAdapter sqlDataAdapter;
+        private DataTable dataTable;
+        private DataSet dataSet;
+        private string result;
+
+
+        private static string connectionString;
+        #endregion
+
+        #region Public Variables
+
+        string local;
+
+        public string Local
+        {
+            get { return local; }
+            set { local = value; }
+        }
+        string test;
+
+        public string Test
+        {
+            get { return test; }
+            set { test = value; }
+        }
+        public enum Action
+        {
+            read,
+            insert,
+            update,
+            delete,
+            search
+        }
+        public enum OutputParameter
+        {
+            ResultMsg,
+            PRC,
+            Result
+        }
+
+        public enum Transaction
+        {
+            Success,
+            Failure
+        }
+      
+        public string Result
+        {
+            get { return result; }
+            set { result = value; }
+        }
+
+        #endregion
+
+        #region Private Methods
+        private SqlCommand OpenConnection()
+        {
+            SetConnectionString();
+            sqlConnection = new SqlConnection(connectionString);
+            try
+            {
+                sqlConnection.Open();
+                sqlCommand = new SqlCommand();
+                sqlCommand.Connection = sqlConnection;
+                return sqlCommand;
+            }
+            catch (Exception ex)
+            {
+                Message = ex.Message;
+                sqlConnection.Close();
+                sqlConnection.Dispose();
+            }
+            return null;
+        }
+        private void SetConnectionString()
+        {
+            try
+            {
+                try
+                {
+                    //connectionString = @"Data Source=.;Database=TestCon; Persist Security Info=True;User ID=sa;Password=sa123";
+                    connectionString = ConfigurationManager.ConnectionStrings["ConnectionString"].ConnectionString.ToString();
+                }
+                catch
+                {
+                    
+
+                }
+
+
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Sorry, Not Connected to the Database " + ex.Message);
+            }
+        }
+
+        private SqlCommand AddParameter(string sqlCommandText, bool IsProcedure, string parameterName, DataTable parameterValue)
+        {
+            try
+            {
+                sqlCommand = OpenConnection();
+                if (IsProcedure)
+                    sqlCommand.CommandType = CommandType.StoredProcedure;
+                else
+                    sqlCommand.CommandType = CommandType.Text;
+                sqlCommand.CommandTimeout = 500;
+                sqlCommand.CommandText = sqlCommandText;
+                sqlCommand.Parameters.AddWithValue("@" + parameterName, parameterValue);
+            }
+            catch (Exception ex)
+            {
+                Message = ex.Message;
+                sqlCommand.Connection.Close();
+                sqlCommand.Connection.Dispose();
+                sqlCommand.Dispose();
+            }
+            return sqlCommand;
+        }
+
+        private SqlCommand AddParameters(string sqlCommandText, bool IsProcedure, Dictionary<string, object> parameters)
+        {
+            try
+            {
+                sqlCommand = OpenConnection();
+                if (IsProcedure)
+                    sqlCommand.CommandType = CommandType.StoredProcedure;
+                else
+                    sqlCommand.CommandType = CommandType.Text;
+                sqlCommand.CommandTimeout = 500;
+                sqlCommand.CommandText = sqlCommandText;
+                if (parameters != null)
+                {
+                    foreach (var param in parameters)
+                    {
+                        sqlCommand.Parameters.Add("@" + param.Key, param.Value);
+
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Message = ex.Message;
+                sqlCommand.Connection.Close();
+                sqlCommand.Connection.Dispose();
+                sqlCommand.Dispose();
+            }
+            return sqlCommand;
+        }
+        private SqlCommand AddParameters(string sqlCommandText, bool IsProcedure, Dictionary<string, object> parameters, OutputParameter outParameter, SqlDbType sqlDbType)
+        {
+            try
+            {
+                sqlCommand = OpenConnection();
+                if (IsProcedure)
+                    sqlCommand.CommandType = CommandType.StoredProcedure;
+                else
+                    sqlCommand.CommandType = CommandType.Text;
+                sqlCommand.CommandTimeout = 500;
+                sqlCommand.CommandText = sqlCommandText;
+
+                SqlParameter sqlParameter = new SqlParameter("v" + outParameter.ToString(), sqlDbType);
+                sqlParameter.Size = 100;
+                sqlParameter.Direction = ParameterDirection.InputOutput;
+                sqlCommand.Parameters.Add(sqlParameter);
+
+                if (parameters != null)
+                {
+                    foreach (var param in parameters)
+                    {
+                        sqlCommand.Parameters.Add("v" + param.Key, param.Value);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Message = ex.Message;
+                sqlCommand.Connection.Close();
+                sqlCommand.Connection.Dispose();
+                sqlCommand.Dispose();
+            }
+            return sqlCommand;
+        }
+        private DataSet ExecuteNonQuery(string sqlCommandText, bool isProcedure, Dictionary<string, object> parameters)
+        {
+            try
+            {
+                sqlCommand = AddParameters(sqlCommandText, isProcedure, parameters);
+                sqlDataAdapter = new SqlDataAdapter(sqlCommand);
+                sqlDataAdapter.Fill(dataSet);
+            }
+            catch (Exception ex)
+            {
+                Message = ex.Message;
+            }
+            finally
+            {
+                sqlCommand.Connection.Close();
+                sqlCommand.Connection.Dispose();
+                sqlCommand.Dispose();
+            }
+            return dataSet;
+        }
+        private DataSet ExecuteNonQuery(string sqlCommandText, bool isProcedure, Dictionary<string, object> parameters, OutputParameter outParameter, SqlDbType sqlDbType)
+        {
+            try
+            {
+
+                sqlCommand = AddParameters(sqlCommandText, isProcedure, parameters, outParameter, sqlDbType);
+                sqlDataAdapter = new SqlDataAdapter(sqlCommand);
+                sqlDataAdapter.Fill(dataSet);
+            }
+            catch (Exception ex)
+            {
+                Message = ex.Message;
+            }
+            finally
+            {
+                sqlCommand.Connection.Close();
+                sqlCommand.Connection.Dispose();
+                sqlCommand.Dispose();
+            }
+            return dataSet;
+        }
+        #endregion
+
+        #region Public methods
+        public string Message
+        {
+            get { return message; }
+            set { message = value; }
+        }
+        protected DataTable GetDataTable(string sqlCommandText, bool isProcedure, Dictionary<string, object> parameters)
+        {
+
+            try
+            {
+                dataSet = GetDataSet(sqlCommandText, isProcedure, parameters);
+                if (dataSet.Tables.Count != 0)
+                {
+                    dataTable = new DataTable();
+                    dataTable = dataSet.Tables[0];
+                    return dataTable;
+                }
+            }
+            catch (Exception ex)
+            {
+                dataTable.Dispose();
+                Message = ex.Message;
+            }
+
+            return dataTable;
+        }
+        protected DataTable GetDataTable(string sqlCommandText, bool isProcedure, Dictionary<string, object> parameters, OutputParameter outParameter, SqlDbType sqlDbType)
+        {
+
+            try
+            {
+                dataSet = GetDataSet(sqlCommandText, isProcedure, parameters, outParameter, sqlDbType);
+                if (dataSet.Tables.Count != 0)
+                {
+                    dataTable = new DataTable();
+                    dataTable = dataSet.Tables[0];
+                    return dataTable;
+                }
+            }
+            catch (Exception ex)
+            {
+                dataTable.Dispose();
+                Message = ex.Message;
+            }
+
+            return dataTable;
+        }
+        protected DataSet GetDataSet(string sqlCommandText)
+        {
+
+            try
+            {
+                dataSet = new DataSet();
+                dataSet = ExecuteNonQuery(sqlCommandText, false, null);
+                if (dataSet.Tables.Count != 0)
+                {
+                    return dataSet;
+                }
+            }
+            catch (Exception ex)
+            {
+                dataSet.Dispose();
+                Message = ex.Message;
+            }
+
+            return dataSet;
+        }
+        protected DataSet GetDataSet(string sqlCommandText, bool isProcedure, Dictionary<string, object> parameters)
+        {
+            try
+            {
+                dataSet = new DataSet();
+                dataSet = ExecuteNonQuery(sqlCommandText, isProcedure, parameters);
+                if (dataSet.Tables.Count != 0)
+                {
+                    return dataSet;
+                }
+            }
+            catch (Exception ex)
+            {
+                dataSet.Dispose();
+                Message = ex.Message;
+            }
+
+            return dataSet;
+        }
+        protected DataSet GetDataSet(string sqlCommandText, bool isProcedure, Dictionary<string, object> parameters, OutputParameter outParameter, SqlDbType sqlDbType)
+        {
+            try
+            {
+
+                dataSet = new DataSet();
+                dataSet = ExecuteNonQuery(sqlCommandText, isProcedure, parameters, outParameter, sqlDbType);
+                if (dataSet.Tables.Count != 0)
+                {
+                    return dataSet;
+                }
+            }
+            catch (Exception ex)
+            {
+                dataSet.Dispose();
+                Message = ex.Message;
+            }
+
+            return dataSet;
+        }
+        private void AddOutputParameter(string parameterName)
+        {
+            SqlParameter Parameter = new SqlParameter(parameterName, SqlDbType.Int);
+            Parameter.Direction = ParameterDirection.Output;
+            sqlCommand.Parameters.Add(Parameter);
+
+        }
+
+        private void AddOutputParameterString(string parameterNameString)
+        {
+            SqlParameter Parameter = new SqlParameter(parameterNameString, SqlDbType.NVarChar);
+            Parameter.Direction = ParameterDirection.Output;
+            Parameter.Size = 20;
+            sqlCommand.Parameters.Add(Parameter);
+
+        }
+        private void AddOutputParameterTable(string parameterNameString, DataTable dt)
+        {
+            SqlParameter Parameter = sqlCommand.Parameters.AddWithValue(parameterNameString, dt);
+            Parameter.SqlDbType = SqlDbType.Structured;
+            //Parameter.Direction = ParameterDirection.Output;
+            Parameter.TypeName = "dbo.Test";
+
+
+        }
+        protected string ExecuteQuery(string sqlCommandText, bool isProcedure, Dictionary<string, object> parameters, OutputParameter outParameter)
+        {
+            string _Result = "";
+            try
+            {
+                sqlCommand = AddParameters(sqlCommandText, isProcedure, parameters);
+                AddOutputParameter("@" + outParameter.ToString());
+                sqlCommand.Transaction = sqlCommand.Connection.BeginTransaction();
+                sqlCommand.ExecuteNonQuery();
+                if (string.IsNullOrEmpty(sqlCommand.Parameters["@" + OutputParameter.Result.ToString()].Value.ToString()))
+                {
+                    sqlCommand.Transaction.Rollback();
+
+                }
+                else
+                {
+                    sqlCommand.Transaction.Commit();
+                    _Result = sqlCommand.Parameters["@" + outParameter.ToString()].Value.ToString();
+                }
+
+                // Message = sqlCommand.Parameters["@" + OutputParameter.ResultMsg.ToString()].Value.ToString();
+                //if (((Transaction)Convert.ToInt32(Message.Substring(0, 1))).Equals(Transaction.Sucess))
+                //    sqlCommand.Transaction.Commit();
+                //else
+                //    sqlCommand.Transaction.Rollback();
+            }
+            catch (Exception ex)
+            {
+                sqlCommand.Transaction.Rollback();
+                Message = ex.Message;
+                _Result = "";
+            }
+            finally
+            {
+                sqlCommand.Connection.Close();
+                sqlCommand.Connection.Dispose();
+                sqlCommand.Dispose();
+            }
+            return _Result;
+        }
+        protected int ExecuteQuery(string sqlCommandText, bool isProcedure, Dictionary<string, object> parameters, OutputParameter outParameter, int type)
+        {
+            int _Result = 0;
+            try
+            {
+                sqlCommand = AddParameters(sqlCommandText, isProcedure, parameters);
+                AddOutputParameter("@" + outParameter.ToString());
+                sqlCommand.Transaction = sqlCommand.Connection.BeginTransaction();
+                sqlCommand.ExecuteNonQuery();
+                if (Convert.ToInt32(sqlCommand.Parameters["@" + OutputParameter.Result.ToString()].Value.ToString()) > 0)
+                {
+
+                    sqlCommand.Transaction.Commit();
+                    _Result = Convert.ToInt32(sqlCommand.Parameters["@" + outParameter.ToString()].Value.ToString());
+                }
+                else
+                {
+                    sqlCommand.Transaction.Rollback();
+                }
+
+            }
+            catch (Exception ex)
+            {
+                sqlCommand.Transaction.Rollback();
+                Message = ex.Message;
+                _Result = 0;
+            }
+            finally
+            {
+                sqlCommand.Connection.Close();
+                sqlCommand.Connection.Dispose();
+                sqlCommand.Dispose();
+            }
+            return _Result;
+        }
+
+        protected DataTable ExecuteQuery(string sqlCommandText, bool isProcedure, Dictionary<string, object> parameters, OutputParameter outParameter, DataTable Type)
+        {
+            DataTable dt = new DataTable();
+
+            try
+            {
+                sqlCommand = AddParameters(sqlCommandText, isProcedure, parameters);
+                AddOutputParameter("@" + outParameter.ToString());
+                sqlCommand.Transaction = sqlCommand.Connection.BeginTransaction();
+                sqlCommand.ExecuteNonQuery();
+                if (Convert.ToInt32(sqlCommand.Parameters["@" + OutputParameter.Result.ToString()].Value.ToString()) == 0)
+                {
+
+                    sqlCommand.Transaction.Commit();
+                }
+                else
+                {
+                    sqlCommand.Transaction.Rollback();
+                }
+
+            }
+            catch (Exception ex)
+            {
+                sqlCommand.Transaction.Rollback();
+                Message = ex.Message;
+            }
+            finally
+            {
+                sqlCommand.Connection.Close();
+                sqlCommand.Connection.Dispose();
+                sqlCommand.Dispose();
+            }
+            return dt;
+        }
+
+        protected void ExecuteQuery1(string sqlCommandText, bool isProcedure, Dictionary<string, object> parameters, OutputParameter outParameter)
+        {
+
+            try
+            {
+                sqlCommand = AddParameters(sqlCommandText, isProcedure, parameters);
+                AddOutputParameterString("@" + outParameter.ToString());
+                sqlCommand.Transaction = sqlCommand.Connection.BeginTransaction();
+                sqlCommand.ExecuteNonQuery();
+                result = sqlCommand.Parameters["@" + outParameter.ToString()].Value.ToString();
+                if (sqlCommand.Parameters["@" + OutputParameter.Result.ToString()].Value.ToString().Length > 0)
+                {
+                    sqlCommand.Transaction.Commit();
+                    result = sqlCommand.Parameters["@" + outParameter.ToString()].Value.ToString();
+                }
+                else
+                {
+                    sqlCommand.Transaction.Rollback();
+                }
+
+
+            }
+            catch (Exception ex)
+            {
+                sqlCommand.Transaction.Rollback();
+                Message = ex.Message;
+            }
+            finally
+            {
+                sqlCommand.Connection.Close();
+                sqlCommand.Connection.Dispose();
+                sqlCommand.Dispose();
+            }
+        }
+
+
+
+        public bool RecordExists(string sqlCommandText, bool isProcedure, Dictionary<string, object> parameters)
+        {
+
+            bool STATUS = false;
+            try
+            {
+                sqlCommand = AddParameters(sqlCommandText, isProcedure, parameters);
+
+                SqlDataReader SqlDr = sqlCommand.ExecuteReader();
+                if (SqlDr.Read())
+                {
+                    SqlDr.Close();
+                    STATUS = true;
+
+                }
+                else
+                {
+                    STATUS = false;
+
+                }
+
+
+            }
+            catch (Exception ex)
+            {
+                STATUS = false;
+                sqlCommand.Transaction.Rollback();
+                Message = ex.Message;
+            }
+            finally
+            {
+                sqlCommand.Connection.Close();
+                sqlCommand.Connection.Dispose();
+                sqlCommand.Dispose();
+            }
+
+            return STATUS;
+
+        }
+        public string ExecuteScalar(string sqlCommandText, bool isProcedure, Dictionary<string, object> parameters)
+        {
+
+            object val = null;
+            try
+            {
+                sqlCommand = AddParameters(sqlCommandText, isProcedure, parameters);
+
+                SqlTransaction transaction;
+                transaction = sqlConnection.BeginTransaction();
+                try
+                {
+                    sqlCommand.Transaction = transaction;
+                    val = sqlCommand.ExecuteScalar();
+                    transaction.Commit();
+                    if (val == null)
+                    {
+                        return ("");
+                    }
+                    else
+                    {
+                        return (val.ToString());
+                    }
+                }
+                catch (Exception ex)
+                {
+                    transaction.Rollback();
+                    return ("");
+                }
+
+
+            }
+            catch (Exception ex)
+            {
+
+                sqlCommand.Transaction.Rollback();
+                Message = ex.Message;
+                return ("");
+            }
+            finally
+            {
+                sqlCommand.Connection.Close();
+                sqlCommand.Connection.Dispose();
+                sqlCommand.Dispose();
+            }
+
+
+
+        }
+
+
+        #endregion
+
+        #region
+
+
+
+        #endregion
+    }
+}
+
