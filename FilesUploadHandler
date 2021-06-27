@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Configuration;
 using System.Drawing;
 using System.IO;
 using System.Linq;
@@ -63,7 +64,7 @@ namespace ConstructFore.admin.Handlers
                                 //--------- thumbnail image resize for
                                 var reImgPath = context.Server.MapPath("~/MasterImages/"+ fileName);
                                 Bitmap bm = new Bitmap(reImgPath);
-                                Image image = (Image)resizeImage(bm, new Size(530, 530));
+                                Image image = (Image)resizeImage(bm);
                                 image.Save(tsavepath);
 
                                 tsavepath = "..//MasterImages//"+ thumbFileName;
@@ -102,8 +103,16 @@ namespace ConstructFore.admin.Handlers
             context.Response.End();
         }
 
-        public static Image resizeImage(Image imgToResize, Size size)
+        public static Image resizeImage(Image imgToResize)
         {
+            int orgWidth = imgToResize.Width;
+            int orgHeight = imgToResize.Height;
+
+            int newWidth =Convert.ToInt32(ConfigurationManager.AppSettings["HomeThumImageWidth"]);
+            int newHeight = (newWidth * orgHeight) / orgWidth; 
+            Size size = new Size();
+            size.Width = newWidth;
+            size.Height = newHeight;
             return (Image)(new Bitmap(imgToResize, size));
         }
         public int RemoveImage(string ImageId)
