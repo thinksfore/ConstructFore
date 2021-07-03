@@ -1,4 +1,6 @@
-CREATE OR ALTER PROCEDURE [dbo].[USP_ImageOperations] 
+
+
+CREATE OR ALTER   PROCEDURE [dbo].[USP_ImageOperations] 
 @Action varchar(50) ,@ImageId int=0,
 @ImageName varchar(150)='',@ImageDiscription varchar(2000)='',@ImageOrder int=0,@ImageStatus int=0,@HomeImageStatus int=0
 ,@BannerImageStatus int=0,@ImagePath varchar(500)='',@ThumbnailImagePath varchar(500)='',@UploadType int=0,@UserId int=0
@@ -60,7 +62,7 @@ BEGIN
 		BEGIN
 			IF @ImageId=1
 			 SELECT ISNULL(COUNT(ImageOrder),0) as result FROM mstrImages 
-			 WHERE ImageOrder=@ImageOrder and IsHome=1;
+			 WHERE ImageOrder=@ImageOrder;
 		    /*ELSE
 		     SELECT ISNULL(COUNT(ImageOrder),0) as result FROM mstrImages 
 		     WHERE ImageOrder=@ImageOrder and IsBanner=1;*/
@@ -78,74 +80,77 @@ BEGIN
 END
 
 GO
-CREATE OR ALTER PROCEDURE [dbo].[usp_GetUserProfileDetails] 
-	@Action		VARCHAR(15),
-	@Name		VARCHAR(150)='',
-	@Password	VARCHAR(150)='',	
-	@UserId		INT=0,
-	@EmailId	VARCHAR(150)=''
-AS
-BEGIN
-	IF @Action='readProfile'
+CREATE OR ALTER PROCEDURE [dbo].[USP_VideoOperations] 
+@Action varchar(50) ,@VideoId int=0,
+@VideoName varchar(150)='',@VideoDiscription varchar(2000)='',@VideoOrder int=0,@VideoStatus int=0,@HomeVideoStatus int=0
+,@VideoPath varchar(500)='',@ThumbnailImagePath varchar(500)='',@UploadType int=0,@UserId int=0,@IsURL int=0
+AS   
+BEGIN  
+	SET NOCOUNT ON;   
+	DECLARE @Rowcount int 
+	
+	IF @Action='insert'
+	BEGIN
+		INSERT INTO mstrVideos(VideoName,VideoDescription,VideoOrder,IsActive,IsHome,CreatedBy,CreatedDate,VideoPath,IsURL,ThumbnailImagePath)
+		VALUES(@VideoName,@VideoDiscription,@VideoOrder,@VideoStatus,@HomeVideoStatus,@UserId,GETDATE(),@VideoPath,@IsURL,@ThumbnailImagePath); 
+
+		SELECT SCOPE_IDENTITY() AS VideoId;
+	END
+	ELSE IF @Action='read'
+	BEGIN
+		IF @VideoId=0
 		BEGIN
-			SELECT Name,UserName,EmailId FROM mstrUser WHERE Id=@UserId AND IsActive=1;
+			SELECT Id,VideoName,ISNULL(VideoDescription,'') AS VideoDescription,VideoOrder,VideoPath,
+			IsActive,ISNULL(IsHome,0) AS IsHome,CreatedDate,CreatedBy,ISNULL(IsURL,0) AS IsURL,ThumbnailImagePath
+			FROM mstrVideos ORDER BY ID DESC;
+			
+			SELECT ISNULL(COUNT(*),0) AS ActiveHomeImgCount FROM mstrVideos WHERE IsActive=1 and IsHome=1
 		END
-	ELSE IF @Action='oldpwdcheck'
-		SELECT COUNT(Id) AS Result FROM mstrUser WHERE Password=@Password;
-	ELSE IF @Action='updateProfile'
+		ELSE
 		BEGIN
-			IF @Name!= ''
-				UPDATE mstrUser SET Name= @Name WHERE Id=@UserId AND IsActive=1;
-			IF @Password!= ''
-				UPDATE mstrUser SET Password= @Password WHERE Id=@UserId AND IsActive=1;
-			SELECT 1 AS Result;
+			SELECT Id,VideoName,VideoDescription,VideoOrder,VideoPath,IsActive,IsHome ,CreatedDate,CreatedBy,ISNULL(IsURL,0) AS IsURL
+			FROM mstrVideos WHERE ID=@VideoId;
 		END
-	ELSE IF @Action='updateresetpwd'
+	END
+	ELSE IF @Action='update'
+	BEGIN
+		IF @UploadType=1
 		BEGIN
-			UPDATE mstrUser SET [Password] = @Password WHERE EmailId=@EmailId AND IsActive=1;
-			SELECT 1 AS Result;
+			UPDATE mstrVideos SET VideoPath=LTRIM(RTRIM(@VideoPath)),ThumbnailImagePath=@ThumbnailImagePath WHERE Id=@VideoId;
+			SELECT  @VideoId as VideoId; 
 		END
+		ELSE
+		BEGIN
+			UPDATE mstrVideos SET VideoName=@VideoName
+			,VideoDescription=@VideoDiscription
+			,VideoOrder=@VideoOrder
+			,IsActive=@VideoStatus
+			,IsHome=@HomeVideoStatus
+			,CreatedBy=@UserId
+			,CreatedDate=GETDATE()
+			,IsUrl=@IsURL
+			WHERE Id=@VideoId;
+			
+			SELECT  @VideoId as VideoId; 
+		END
+	END
+	ELSE IF @Action='search'
+	BEGIN
+		IF @VideoOrder>0
+		BEGIN
+			IF @VideoId=1
+			 SELECT ISNULL(COUNT(VideoOrder),0) as result FROM mstrVideos 
+			 WHERE VideoOrder=@VideoOrder;
+		END
+		ELSE
+		BEGIN
+			SELECT ISNULL(VideoPath,'')+'#'+CONVERT(nvarchar(1),isnull(IsUrl,0)) AS result FROM mstrVideos WHERE ID=@VideoId;
+		END
+	END
+	ELSE IF @Action='delete'
+	BEGIN
+		DELETE FROM mstrVideos WHERE Id=@VideoId;
+		SELECT  @VideoId as VideoId; 
+	END
 END
 
-GO
-CREATE OR ALTER PROCEDURE [dbo].[usp_GetUserDetails] 
-	@Action		VARCHAR(15),
-	@UserName	VARCHAR(150)='',
-	@Password	VARCHAR(150)='',
-	@EmailId	VARCHAR(150)='',
-	@Name		VARCHAR(150)='',
-	@UserId		INT=0
-AS
-BEGIN
-	IF @Action='checkauth'
-		BEGIN
-			SELECT Id,Name FROM mstrUser WHERE UserName=@UserName AND [Password]=@Password AND IsActive=1;
-		END
-	ELSE IF @Action='insert'
-		IF NOT EXISTS(SELECT EmailId FROM mstrUser WHERE EmailId=@UserName)
-			IF NOT EXISTS(SELECT EmailId FROM mstrUser WHERE EmailId=@EmailId)
-				BEGIN
-					INSERT INTO mstrUser(Name,UserName,[Password],EmailId,IsActive,CreatedDate)
-					VALUES(@Name,@UserName,@Password,@EmailId,1,GETDATE());
-					IF @@ROWCOUNT>0
-						SELECT 1 AS Result;
-					ELSE
-						SELECT 0 AS Result;
-				END
-			ELSE
-				SELECT 2 AS Result;
-		ELSE
-			SELECT 3 AS Result;
-	ELSE IF @Action='readProfile'
-		BEGIN
-			SELECT Name,UserName,EmailId FROM mstrUser WHERE Id=@UserId AND IsActive=1;
-		END
-	ELSE IF @Action='updateProfile'
-		BEGIN
-			IF @Name!= ''
-				UPDATE mstrUser SET Name= @Name WHERE Id=@UserId AND IsActive=1;
-			IF @Password!= ''
-				UPDATE mstrUser SET Password= @Password WHERE Id=@UserId AND IsActive=1;
-			SELECT 1 AS Result;
-		END
-END
